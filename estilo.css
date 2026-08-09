@@ -9,7 +9,7 @@ body {
 }
 
 .caixa-total {
-    background-color: #0f766e;  
+    background-color: #274845;  
     color: #ffffff; 
     padding: 24px; 
     text-align: center; 
@@ -28,10 +28,54 @@ h1 {
     margin: 16px;  
 }
 .total-gasto {
-    font-size: 42px;
+    font-size: 2.2em;
     font-weight: bold; 
     margin: 12px; 
 }
+
+.comprovante {
+    width: 100%;
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 20px;
+
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+
+    box-sizing: border-box;
+}
+
+.itens {
+    width: 100%;
+    padding: 20px 10px;
+    font-size: 15px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    box-sizing: border-box;
+}
+
+.total-nota {
+    width: 100%;
+    margin-top: 15px;
+    padding: 15px 5px;
+    background-color: #38765949;
+    border-top: 2px solid #121816;
+    border: none;
+    text-align: right;
+    font-size: 20px;
+    font-weight: bold;
+    color: #161313;
+
+    box-sizing: border-box;
+}
+
+
 
 label {
     background-color: #ffffff; 
@@ -39,7 +83,7 @@ label {
     padding: 28px;  
     text-align: center;  
     font-weight: bold;  
-    border: 4px dashed #c3cfe0;
+    border: 4px dashed #757d89;
     display: block; 
     margin: 16px;  
     cursor: pointer;  

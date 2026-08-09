@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="estilo.css">
-    <title>Gasto foto
-
-    </title>
+     <script src=" https://js.puter.com/v2/ "></script>
+    <title>Gasto foto</title>
 </head>
 <body>
     <div class="topo"> 
@@ -16,17 +15,24 @@
         
     <div class="caixa-total"> 
         <p>Total gasto</p> 
-        <h2>R$ 0,00</h2>
-        <p>0 comprovantes lidos</p>  
+        <h2 class="total-gasto">R$ 0,00</h2>
+        <p class="lidos">comprovantes lidos: 0</p>
+         
     </div >
 
-    
-         
     <!--INPUT PARA SELECIONAR IMAGENS-->
-    <label for="file-input">Clique aqui ou arraste a foto do comprovante</label>
-     
+    <label> 
+        Toque aqui para fotografar o comprovante
+        <input class="foto" onchange="lerfoto()" type="file" accept="image/*">
+    </label>
+
+    <div class="lista-de-comprovantes">
         
-        <input type="file" accept="image/*" id="file-input">
+       
+
+    </div>
+    
+        
 </body>
 
 <script src="script.js"></script>
