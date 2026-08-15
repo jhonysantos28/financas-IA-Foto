@@ -27,55 +27,104 @@ h1 {
     text-align: center; 
     margin: 16px;  
 }
+
+.resumo {
+    width: 90%;
+    max-width: 600px;
+    margin: 20px auto;
+
+    display: flex;
+    gap: 15px;
+}
+
+.caixa-total {
+    flex: 1;
+    font-size: 0.8em;
+    background: white;
+    padding: 20px;
+    color: black;
+
+    border-radius: 15px;
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.20);
+}
+
+.caixa-total p {
+    margin: 0 0 10px;
+    color: #666;
+}
+
+.caixa-total h2 {
+    margin: 0;
+}
 .total-gasto {
-    font-size: 2.2em;
+    font-size: 2.1em;
     font-weight: bold; 
     margin: 12px; 
 }
 
+.lista-de-comprovantes {
+    width: 90%;
+    max-width: 600px;
+    margin: 20px auto;
+}
 .comprovante {
-    width: 100%;
-    max-width: 700px;
+    background: white;
     margin: 20px auto;
     padding: 20px;
+    width: 90%;
+    max-width: 550px;
 
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 12px;
+    border-radius: 15px;
 
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-
-    box-sizing: border-box;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.10);
 }
 
-.itens {
-    width: 100%;
-    padding: 20px 10px;
-    font-size: 15px;
-    font-weight: bold;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.cabecalho-comprovante {
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
 
-    box-sizing: border-box;
+
+.nome-estabelecimento {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.informacoes-comprovante {
+    margin-top: 15px;
+}
+
+.forma-pagamento,
+.parcelas,
+.data-horario {
+    margin: 10px 0;
+    color: #555;
 }
 
 .total-nota {
-    width: 100%;
     margin-top: 15px;
-    padding: 15px 5px;
-    background-color: #38765949;
-    border-top: 2px solid #121816;
-    border: none;
-    text-align: right;
-    font-size: 20px;
-    font-weight: bold;
-    color: #161313;
+    padding-top: 15px;
 
-    box-sizing: border-box;
+    border-top: 1px solid #eee;
+
+    font-size: 18px;
 }
 
+.botao-excluir {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
 
+    border: none;
+    border-radius: 8px;
+
+    background: #e74c3c;
+    color: white;
+
+    cursor: pointer;
+    font-weight: bold;
+}
 
 label {
     background-color: #ffffff; 
