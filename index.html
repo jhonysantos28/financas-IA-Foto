@@ -33,26 +33,79 @@
     </div>
       <div class="categorias">
 
-    <h3>Gastos por categoria</h3>
+    <div class="titulo-categorias">
+        <div>
+            <span>📊</span>
+            <div>
+                <h3>Gastos por categoria</h3>
+                <p>Veja onde seu dinheiro está indo</p>
+            </div>
+        </div>
+    </div>
 
-    <p>Mercado: <strong class="mercado">R$ 0,00</strong></p>
+    <div class="grid-categorias">
 
-    <p>Transporte: <strong class="transporte">R$ 0,00</strong></p>
+        <div class="card-categoria">
+            <div class="categoria-icone"></div>
+            <div class="categoria-info">
+                <span>Mercado</span>
+                <strong class="mercado">R$ 0,00</strong>
+            </div>
+        </div>
 
-    <p>Comida: <strong class="comida">R$ 0,00</strong></p>
+        <div class="card-categoria">
+            <div class="categoria-icone"></div>
+            <div class="categoria-info">
+                <span>Transporte</span>
+                <strong class="transporte">R$ 0,00</strong>
+            </div>
+        </div>
 
-    <p>Saúde: <strong class="saude">R$ 0,00</strong></p>
+        <div class="card-categoria">
+            <div class="categoria-icone"></div>
+            <div class="categoria-info">
+                <span>Comida</span>
+                <strong class="comida">R$ 0,00</strong>
+            </div>
+        </div>
 
-    <p>Lazer: <strong class="lazer">R$ 0,00</strong></p>
+        <div class="card-categoria">
+            <div class="categoria-icone"></div>
+            <div class="categoria-info">
+                <span>Saúde</span>
+                <strong class="saude">R$ 0,00</strong>
+            </div>
+        </div>
 
-    <p>Casa: <strong class="casa">R$ 0,00</strong></p>
+        <div class="card-categoria">
+            <div class="categoria-icone"></div>
+            <div class="categoria-info">
+                <span>Lazer</span>
+                <strong class="lazer">R$ 0,00</strong>
+            </div>
+        </div>
 
-    <p>Outros: <strong class="outros">R$ 0,00</strong></p>
+        <div class="card-categoria">
+            <div class="categoria-icone"></div>
+            <div class="categoria-info">
+                <span>Casa</span>
+                <strong class="casa">R$ 0,00</strong>
+            </div>
+        </div>
+
+        <div class="card-categoria">
+            <div class="categoria-icone"></div>
+            <div class="categoria-info">
+                <span>Outros</span>
+                <strong class="outros">R$ 0,00</strong>
+            </div>
+        </div>
 
     </div>
 
-   
+</div>
 
+   
     <!--INPUT PARA SELECIONAR IMAGENS-->
     <label class="botao-foto"> 
              📷 Tirar foto do comprovante
@@ -61,14 +114,158 @@
 
     </label>
      
-    <button class="botao-voz" onclick="iniciarVoz()">
-    🎙️ Falar gasto
-    </button>
+        <button class="botao-voz" onclick="iniciarVoz()">
+        🎙️ Falar gasto
+        </button>
 
     <div class="texto-voz">
-
         
     </div>
+
+    <section class="registro-manual">
+
+    <div class="registro-manual-titulo">
+        <div class="registro-manual-icone">
+            ⌨️
+        </div>
+
+        <div>
+            <h3>Registrar gasto manualmente</h3>
+            <p>Digite os dados da sua compra</p>
+        </div>
+    </div>
+
+    <div class="formulario-gasto">
+
+        <!-- Estabelecimento -->
+        <div class="campo-formulario">
+            <label for="estabelecimento-manual">
+                Estabelecimento
+            </label>
+
+            <input
+                type="text"
+                id="estabelecimento-manual"
+                class="estabelecimento-manual"
+                placeholder="Ex: Mercado Guanabara"
+            >
+        </div>
+
+
+        <!-- Valor -->
+        <div class="campo-formulario">
+            <label for="valor-manual">
+                Valor da compra
+            </label>
+
+            <div class="campo-valor">
+                <span>R$</span>
+
+                <input
+                    type="number"
+                    id="valor-manual"
+                    class="valor-manual"
+                    placeholder="0,00"
+                    step="0.01"
+                    min="0"
+                >
+            </div>
+        </div>
+
+
+        <!-- Categoria -->
+        <div class="campo-formulario">
+            <label for="categoria-manual">
+                Categoria
+            </label>
+
+            <select
+                id="categoria-manual"
+                class="categoria-manual"
+            >
+                <option value="Mercado"> Mercado</option>
+                <option value="Transporte"> Transporte</option>
+                <option value="Comida"> Comida</option>
+                <option value="Saúde"> Saúde</option>
+                <option value="Lazer"> Lazer</option>
+                <option value="Casa"> Casa</option>
+                <option value="Outros"> Outros</option>
+            </select>
+        </div>
+
+
+        <!-- Forma de pagamento -->
+        <div class="campo-formulario">
+            <label for="pagamento-manual">
+                Forma de pagamento
+            </label>
+
+            
+
+        <select
+                id="pagamento-manual"
+                class="pagamento-manual"
+            >
+                <option value="Não informado">
+                    💳 Não informado
+                </option>
+
+                <option value="Crédito">
+                    💳 Crédito
+                </option>
+
+                <option value="Débito">
+                    💳 Débito
+                </option>
+
+                <option value="PIX">
+                    💠 PIX
+                </option>
+
+                <option value="Dinheiro">
+                    💵 Dinheiro
+                </option>
+            </select>
+        </div>
+
+        <div class="campo-formulario">
+    <label for="parcelas-manual">
+        Parcelamento
+    </label>
+
+    <select
+        id="parcelas-manual"
+        class="parcelas-manual"
+    >
+        <option value="Não informado">Não informado</option>
+        <option value="1x">1x</option>
+        <option value="2x">2x</option>
+        <option value="3x">3x</option>
+        <option value="4x">4x</option>
+        <option value="5x">5x</option>
+        <option value="6x">6x</option>
+        <option value="7x">7x</option>
+        <option value="8x">8x</option>
+        <option value="9x">9x</option>
+        <option value="10x">10x</option>
+        <option value="12x">12x</option>
+    </select>
+</div>
+
+
+        <!-- Botão -->
+        <button
+            type="button"
+            class="botao-adicionar-gasto"
+            onclick="adicionarGastoManual()"
+        >
+            ➕ Adicionar gasto
+        </button>
+
+    </div>
+
+    </section>
+
     <div class="carregando">
     ⏳ Lendo comprovante...
     </div>
