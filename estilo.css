@@ -376,6 +376,28 @@ input {
     transform: scale(0.98);
 }
 
+.botao-editar {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px 15px;
+    border: 1px solid #cfe0fc;
+    border-radius: 11px;
+    background: #f5f9ff;
+    color: #2461d6;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.botao-editar:hover {
+    background: #e8f0fe;
+    transform: translateY(-1px);
+}
+
 
 /* =========================================================
    TABLET
@@ -676,6 +698,21 @@ input {
 
 .botao-adicionar-gasto:active {
     transform: scale(0.98);
+}
+
+.campo-parcelamento {
+    display: none;
+}
+
+.etiqueta-categoria {
+    display: inline-block;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 6px;
 }
 
 
