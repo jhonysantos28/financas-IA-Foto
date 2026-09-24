@@ -256,6 +256,8 @@ function registrarGasto(dados) {
 
 
 async function lerfoto() {
+        try {
+         
     let foto = document.querySelector(".foto").files[0];
 
     if (!foto) {
@@ -318,6 +320,7 @@ async function lerfoto() {
         dataHorario: dataHorario
     };
 
+
     document.querySelector(".carregando").style.display = "none";
 
     let dadosConfirmados = await confirmarGasto(dados);
@@ -325,9 +328,16 @@ async function lerfoto() {
     if (!dadosConfirmados) {
         return; // usuário cancelou
     }
+    
+       registrarGasto(dadosConfirmados);
 
-    registrarGasto(dadosConfirmados);
+    } catch (erro) {
+        mostrarErroDeConexao(erro);
+    } finally {
+        document.querySelector(".carregando").style.display = "none";
+    }
 }
+   
 
 // Botão Excluir
 function excluirComprovante(botao) {
@@ -610,10 +620,8 @@ function iniciarVoz() {
 
 
         } catch (erro) {
-
-            console.log("Erro ao enviar para IA:", erro);
-
-            alert("Erro ao processar o gasto.");
+            
+              mostrarErroDeConexao(erro);
 
         } finally {
 
