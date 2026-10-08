@@ -4,7 +4,9 @@ Controle financeiro pessoal que usa Inteligência Artificial para registrar gast
 
 ##  Funcionalidades
 
+    
 -  **Leitura de comprovantes por foto** — envie a imagem de uma nota fiscal ou comprovante e a IA extrai automaticamente categoria, estabelecimento, itens, valor, forma de pagamento, parcelas e data.
+-  
 -  **Registro por voz** — fale o gasto naturalmente (ex: *"gastei 50 reais no mercado Guanabara no crédito em duas vezes"*) e a IA interpreta e estrutura as informações.
 -  **Registro manual** — cadastre um gasto digitando os dados diretamente.
 - ✅ **Confirmação antes de salvar** — todo gasto extraído por foto ou voz passa por uma tela de conferência, onde os dados podem ser revisados e corrigidos antes de serem salvos.
