@@ -2,6 +2,117 @@
 
 let pedido = "Leia a foto deste comprovante e responda em UMA ÚNICA LINHA, sem explicações e sem texto adicional.A resposta DEVE ter exatamente 7 partes, separadas pelo caractere |, nesta ordem:1.Categoria2.Estabelecimento 3. Itens 4. Total 5. Forma de pagamento 6. Parcelamento 7. Data e horário REGRAS:1. Categoria: informe somente uma destas opções, exatamente como escrita: Mercado, Transporte, Comida, Saúde, Lazer, Casa ou Outros.Não use emojis.2. Estabelecimento: informe somente o nome do estabelecimento.3. Itens: informe os produtos comprados e seus valores. Separe os itens usando vírgula ou ponto e vírgula. NÃO use o caractere | nos itens.4. Total: informe somente o valor numérico, usando ponto e duas casas decimais. Exemplo: 150.00.5. Forma de pagamento: informe somente Crédito, Débito ou PIX. Se não for possível identificar, informe Não informado.6. Parcelamento:* Cartão de crédito parcelado: informe, por exemplo, 3x de R$ 50,00.* Cartão de crédito à vista: À vista.* PIX: À vista.* Débito: À vista.* Se não for possível identificar: Não informado.7. Data e horário: informe no formato DD/MM/AAAA - HH:MM.Se a data ou o horário não estiverem visíveis ou não puderem ser identificados, informe Não informado.NÃO INVENTE INFORMAÇÕES.NÃO coloque | dentro de nenhum campo.EXEMPLO DE RESPOSTA CORRETA:Comida|Padaria Pão Quente|Pão - R$ 5,00; Leite - R$ 4,50|9.50|PIX|À vista|10/08/2026 - 14:35";
 
+const firebaseConfig = {
+  apiKey: "AIzaSyDc-Hzw9t0a1AHedAhvPqdxbOr7-3snCcA",
+  authDomain: "controle-de-gasto-foto.firebaseapp.com",
+  storageBucket: "controle-de-gasto-foto.firebasestorage.app",
+  projectId: "controle-de-gasto-foto",
+  messagingSenderId: "756967715290",
+  appId: "1:756967715290:web:646297a2e9e6f69de150e3",
+  measurementId: "G-RVCZCE76JM"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let usuarioAtual = null;
+
+function injetarEstilosLogin() {
+    if (document.getElementById("estilos-login-gasto")) return;
+
+    const style = document.createElement("style");
+    style.id = "estilos-login-gasto";
+    style.textContent = `
+        .tela-login-overlay {
+            position: fixed; inset: 0;
+            background: #f5f7fa;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000; padding: 16px;
+        }
+        .caixa-login input {
+            display: block;
+            width: 100%; padding: 10px; margin-top: 10px;
+            border: 1px solid #ccc; border-radius: 8px;
+            font-size: 12px; box-sizing: border-box;
+        }
+
+        }
+        .caixa-login h2 { margin: 0 0 16px 0; font-size: 20px; }
+        .caixa-login input {
+            width: 100%; padding: 12px; margin-top: 10px;
+            border: 1px solid #ccc; border-radius: 8px;
+            font-size: 15px; box-sizing: border-box;
+        }
+        .caixa-login button {
+            width: 100%; padding: 15px; margin-top: 14px;
+            border: none; border-radius: 8px; font-weight: 700;
+            cursor: pointer; font-size: 15px;
+        }
+        .btn-entrar-login { background: #2461d6; color: #fff; }
+        .btn-criar-conta-login { background: #dad8d8b3; color: #333; margin-top: 8px; }
+        .erro-login { color: #d6453d; font-size: 13px; margin-top: 10px; min-height: 16px; }
+    `;
+    document.head.appendChild(style);
+}
+
+function mostrarTelaLogin() {
+    injetarEstilosLogin();
+
+    document.querySelectorAll(".tela-login-overlay").forEach(e => e.remove());
+
+    const tela = document.createElement("div");
+    tela.className = "tela-login-overlay";
+
+    tela.innerHTML = `
+        <div class="caixa-login">
+            <h2>Gasto na Foto</h2>
+            <input type="email" class="login-email" placeholder="Seu email">
+            <input type="password" class="login-senha" placeholder="Sua senha">
+            <button type="button" class="btn-entrar-login">Entrar</button>
+            <button type="button" class="btn-criar-conta-login">Criar conta nova</button>
+            <div class="erro-login"></div>
+        </div>
+    `;
+
+    document.body.appendChild(tela);
+
+    const campoEmail = tela.querySelector(".login-email");
+    const campoSenha = tela.querySelector(".login-senha");
+    const divErro = tela.querySelector(".erro-login");
+
+    tela.querySelector(".btn-entrar-login").addEventListener("click", async () => {
+        divErro.innerHTML = "";
+        try {
+            await auth.signInWithEmailAndPassword(campoEmail.value, campoSenha.value);
+        } catch (erro) {
+            divErro.innerHTML = traduzirErroLogin(erro);
+        }
+    });
+
+    tela.querySelector(".btn-criar-conta-login").addEventListener("click", async () => {
+        divErro.innerHTML = "";
+        try {
+            await auth.createUserWithEmailAndPassword(campoEmail.value, campoSenha.value);
+        } catch (erro) {
+            divErro.innerHTML = traduzirErroLogin(erro);
+        }
+    });
+}
+
+function traduzirErroLogin(erro) {
+    console.log("Erro de login:", erro);
+
+    if (erro.code === "auth/invalid-email") return "Email inválido.";
+    if (erro.code === "auth/missing-password") return "Digite uma senha.";
+    if (erro.code === "auth/weak-password") return "Senha muito fraca (mínimo 6 caracteres).";
+    if (erro.code === "auth/email-already-in-use") return "Esse email já tem uma conta.";
+    if (erro.code === "auth/invalid-credential") return "Email ou senha incorretos.";
+
+    return "Erro ao fazer login. Tente novamente.";
+}
+
 let total = 0;
 let comprovantesLidos = 0;
 let categorias = {
@@ -224,12 +335,15 @@ function confirmarGasto(dados) {
 }
 
 function registrarGasto(dados) {
+      if (!dados.timestampRegistro) {
+        dados.timestampRegistro = Date.now();
+    }
+    
     categorias[dados.categoria] += dados.valor;
-    atualizarCategorias();
 
     document.querySelector(".lista-de-comprovantes").innerHTML += `
     <div class="comprovante" data-categoria="${dados.categoria}" data-valor="${dados.valor}" data-dados="${btoa(unescape(encodeURIComponent(JSON.stringify(dados))))}">
-                <div class="cabecalho-comprovante">
+        <div class="cabecalho-comprovante">
             <div class="etiqueta-categoria">${dados.categoria}</div>
             <div class="nome-estabelecimento">${dados.estabelecimento}</div>
         </div>
@@ -250,6 +364,8 @@ function registrarGasto(dados) {
 
     comprovantesLidos++;
     document.querySelector(".lidos").innerHTML = comprovantesLidos;
+
+    atualizarCategorias();
 
     salvarDados();
 }
@@ -681,7 +797,123 @@ function atualizarCategorias() {
         document.querySelector("." + classe).innerHTML =
             "R$ " + categorias[c].toFixed(2);
     }
+            atualizarOpcoesDeMes();
+         desenharGraficoCategorias();
 }
+
+function recalcularTotaisDosComprovantes() {
+
+    const categoriasRecalculadas = {
+        Mercado: 0,
+        Transporte: 0,
+        Comida: 0,
+        Saúde: 0,
+        Lazer: 0,
+        Casa: 0,
+        Outros: 0
+    };
+
+    let totalRecalculado = 0;
+
+    document.querySelectorAll(".comprovante").forEach(card => {
+        const categoria = card.dataset.categoria;
+        const valor = Number(card.dataset.valor);
+
+        if (categoriasRecalculadas[categoria] !== undefined && !isNaN(valor)) {
+            categoriasRecalculadas[categoria] += valor;
+            totalRecalculado += valor;
+        }
+    });
+
+    categorias = categoriasRecalculadas;
+    total = totalRecalculado;
+
+    atualizarCategorias();
+    document.querySelector(".total-gasto").innerHTML = "R$" + total.toFixed(2);
+
+    salvarDados();
+
+    console.log("Totais recalculados:", categorias, "Total:", total);
+}
+
+let graficoCategorias = null;
+let totalCentralGrafico = 0;
+
+const pluginTextoCentral = {
+    id: "textoCentral",
+    afterDraw(chart) {
+
+        const { ctx, chartArea } = chart;
+
+        if (!chartArea) return;
+
+        const centroX = (chartArea.left + chartArea.right) / 2;
+        const centroY = (chartArea.top + chartArea.bottom) / 2;
+
+        ctx.save();
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.font = "bold 20px Arial";
+        ctx.fillStyle = "#17212b";
+        ctx.fillText("R$ " +  totalCentralGrafico.toFixed(2), centroX, centroY - 8);
+
+        ctx.font = "13px Arial";
+        ctx.fillStyle = "#8a96a3";
+        ctx.fillText("Total gasto", centroX, centroY + 14);
+
+        ctx.restore();
+    }
+};
+
+
+function desenharGraficoCategorias   (categoriasParaExibir, totalParaExibir) {
+
+    const canvas = document.getElementById("grafico-categorias");
+
+    if (!canvas) {
+        return;
+    }
+
+    // Se não vier nada específico, usa os dados globais (comportamento padrão)
+    const dadosCategorias = categoriasParaExibir || categorias;
+    const totalExibido = totalParaExibir !== undefined ? totalParaExibir : total;
+
+    totalCentralGrafico = totalExibido;
+
+    const nomes = Object.keys(dadosCategorias);
+    const valores = Object.values(dadosCategorias);
+    // Se já existe um gráfico desenhado antes, destrói ele primeiro
+    // (senão o Chart.js desenha um gráfico em cima do outro)
+    if (graficoCategorias) {
+        graficoCategorias.destroy();
+    }
+
+           graficoCategorias = new Chart(canvas, {
+        type: "doughnut",
+        plugins: [pluginTextoCentral],
+        data: {
+            labels: nomes,
+            datasets: [{
+                data: valores,
+                backgroundColor: [
+                    "#274845", "#2461d6", "#d6453d",
+                    "#e8a33d", "#8a5fd6", "#2e7d32", "#8a96a3"
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
+}
+
 
 function adicionarGastoManual() {
 
@@ -781,60 +1013,289 @@ document.querySelector(".pagamento-manual").addEventListener("change", function 
 
 });
 
-function salvarDados() {
+async function salvarDados() {
 
-    localStorage.setItem("total", total);
+    if (!usuarioAtual) {
+        return; // ninguém logado, não tem onde salvar
+    }
 
-    localStorage.setItem(
-        "comprovantesLidos",
-        comprovantesLidos
-    );
+    try {
+        await db.collection("usuarios").doc(usuarioAtual.uid).set({
+            total: total,
+            comprovantesLidos: comprovantesLidos,
+            categorias: categorias,
+            comprovantesHTML: document.querySelector(".lista-de-comprovantes").innerHTML
+        });
 
-    localStorage.setItem(
-        "categorias",
-        JSON.stringify(categorias)
-    );
-
-    localStorage.setItem(
-        "comprovantes",
-        document.querySelector(".lista-de-comprovantes").innerHTML
-    );
+    } catch (erro) {
+        console.log("Erro ao salvar no Firestore:", erro);
+    }
 }
 
-function carregarDados() {
+async function carregarDados() {
 
-    const totalSalvo = localStorage.getItem("total");
-    const comprovantesSalvos = localStorage.getItem("comprovantesLidos");
-    const categoriasSalvas = localStorage.getItem("categorias");
-    const comprovantesHTML = localStorage.getItem("comprovantes");
-
-    if (totalSalvo !== null) {
-        total = Number(totalSalvo);
+    if (!usuarioAtual) {
+        return;
     }
 
-    if (comprovantesSalvos !== null) {
-        comprovantesLidos = Number(comprovantesSalvos);
+    try {
+        const documento = await db.collection("usuarios").doc(usuarioAtual.uid).get();
+
+        if (documento.exists) {
+
+            const dadosSalvos = documento.data();
+
+            total = dadosSalvos.total || 0;
+            comprovantesLidos = dadosSalvos.comprovantesLidos || 0;
+            categorias = dadosSalvos.categorias || {
+                Mercado: 0,
+                Transporte: 0,
+                Comida: 0,
+                Saúde: 0,
+                Lazer: 0,
+                Casa: 0,
+                Outros: 0
+            };
+
+            document.querySelector(".lista-de-comprovantes").innerHTML =
+                dadosSalvos.comprovantesHTML || "";
+
+               recalcularTotaisDosComprovantes();
+
+        } else {
+            // Usuário novo, sem dados salvos ainda — começa zerado
+            total = 0;
+            comprovantesLidos = 0;
+            categorias = {
+                Mercado: 0,
+                Transporte: 0,
+                Comida: 0,
+                Saúde: 0,
+                Lazer: 0,
+                Casa: 0,
+                Outros: 0
+            };
+        }
+
+        document.querySelector(".total-gasto").innerHTML = "R$" + total.toFixed(2);
+        document.querySelector(".lidos").innerHTML = comprovantesLidos;
+
+        for (let categoria in categorias) {
+            let classe = categoria
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase();
+
+            const elemento = document.querySelector("." + classe);
+
+            if (elemento) {
+                elemento.innerHTML = "R$ " + categorias[categoria].toFixed(2);
+            }
+        }
+
+     } catch (erro) {
+         console.log("Erro ao carregar do Firestore:", erro);
+        alert("Não foi possível carregar seus dados. Verifique sua internet.");
+    }
+}
+
+
+auth.onAuthStateChanged(function (usuario) {
+
+    if (usuario) {
+        usuarioAtual = usuario;
+
+        document.querySelectorAll(".tela-login-overlay").forEach(e => e.remove());
+
+        criarBotaoLogout();
+        criarSeletorDeMes();
+        carregarDados();
+
+    } else {
+        usuarioAtual = null;
+        removerBotaoLogout();
+        mostrarTelaLogin();
+    }
+});
+
+function criarBotaoLogout() {
+
+    if (document.getElementById("botao-logout-gasto")) {
+        return; // já existe, não duplicar
     }
 
-    if (categoriasSalvas !== null) {
-        categorias = JSON.parse(categoriasSalvas);
+    const botao = document.createElement("button");
+    botao.id = "botao-logout-gasto";
+    botao.innerHTML = " > Sair";
+
+    botao.style.cssText = `
+        position: fixed;
+        top: 14px;
+        right: 10px;
+        z-index: 9998;
+        padding: 8px 11px;
+        border: 1px solid #f2d2d0;
+        border-radius: 10px;
+        background: #fff7f6;
+        color: #e33f36;
+        font-family: inherit;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+    `;
+
+    botao.addEventListener("click", async () => {
+        const confirmar = confirm("Tem certeza que quer sair da conta?");
+
+        if (confirmar) {
+            await auth.signOut();
+        }
+    });
+
+    document.body.appendChild(botao);
+}
+
+function criarSeletorDeMes() {
+
+    if (document.getElementById("seletor-mes-gasto")) {
+        return; // já existe, não duplicar
     }
 
-    if (comprovantesHTML !== null) {
+    const select = document.createElement("select");
+    select.id = "seletor-mes-gasto";
 
-        document.querySelector(
-            ".lista-de-comprovantes"
-        ).innerHTML = comprovantesHTML;
+    select.style.cssText = `
+        display: block;
+        margin: 16px auto;
+        padding: 8px 14px;
+        border: 1px solid #dfe6eb;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        background: #f9fafb;
+        color: #17212b;
+    `;
+
+    // Opção "Todos" sempre disponível
+    select.innerHTML = `<option value="todos">Todos os meses</option>`;
+
+    // Insere logo antes da lista de comprovantes
+    const lista = document.querySelector(".lista-de-comprovantes");
+    lista.parentElement.insertBefore(select, lista);
+
+    select.addEventListener("change", function () {
+        aplicarFiltroDeMes(this.value);
+    });
+}
+
+function atualizarOpcoesDeMes() {
+
+    const select = document.getElementById("seletor-mes-gasto");
+    if (!select) return;
+
+    const valorSelecionadoAntes = select.value;
+
+    const mesesEncontrados = new Set();
+
+    document.querySelectorAll(".comprovante").forEach(card => {
+
+        if (!card.dataset.dados) {
+            return; // card antigo sem essa informação, ignora
+        }
+
+        let dados;
+        try {
+            dados = JSON.parse(
+                decodeURIComponent(escape(atob(card.dataset.dados)))
+            );
+        } catch (erro) {
+            return; // dado corrompido ou inválido, ignora
+        }
+
+        if (dados.timestampRegistro) {
+            const data = new Date(dados.timestampRegistro);
+            const chave = data.getFullYear() + "-" + String(data.getMonth() + 1).padStart(2, "0");
+            mesesEncontrados.add(chave);
+        }
+    });
+
+    // Ordena do mais recente para o mais antigo
+    const mesesOrdenados = Array.from(mesesEncontrados).sort().reverse();
+
+    const nomesDosMeses = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+
+    select.innerHTML = `<option value="todos">Todos os meses</option>`;
+
+    mesesOrdenados.forEach(chave => {
+        const [ano, mes] = chave.split("-");
+        const nomeMes = nomesDosMeses[Number(mes) - 1];
+
+        select.innerHTML += `<option value="${chave}">${nomeMes} de ${ano}</option>`;
+    });
+
+    // Tenta manter a seleção que o usuário já tinha feito
+    if ([...select.options].some(o => o.value === valorSelecionadoAntes)) {
+        select.value = valorSelecionadoAntes;
     }
+}
 
-    document.querySelector(".total-gasto").innerHTML =
-        "R$" + total.toFixed(2);
+function aplicarFiltroDeMes(mesEscolhido) {
 
-    document.querySelector(".lidos").innerHTML =
-        comprovantesLidos;
+    const cards = document.querySelectorAll(".comprovante");
 
-    for (let categoria in categorias) {
+    // Começamos os totais filtrados zerados
+    const categoriasFiltradas = {
+        Mercado: 0,
+        Transporte: 0,
+        Comida: 0,
+        Saúde: 0,
+        Lazer: 0,
+        Casa: 0,
+        Outros: 0
+    };
+    let totalFiltrado = 0;
 
+        cards.forEach(card => {
+
+        if (!card.dataset.dados) {
+            card.style.display = "block"; // sem info, mostra por segurança
+            return;
+        }
+
+        let dados;
+        try {
+            dados = JSON.parse(
+                decodeURIComponent(escape(atob(card.dataset.dados)))
+            );
+        } catch (erro) {
+            card.style.display = "block";
+            return;
+        }
+
+        let pertenceAoMes = true;
+
+        if (mesEscolhido !== "todos" && dados.timestampRegistro) {
+            const data = new Date(dados.timestampRegistro);
+            const chaveDoCard = data.getFullYear() + "-" + String(data.getMonth() + 1).padStart(2, "0");
+            pertenceAoMes = (chaveDoCard === mesEscolhido);
+        }
+
+        if (pertenceAoMes) {
+            card.style.display = "block";
+            categoriasFiltradas[dados.categoria] += dados.valor;
+            totalFiltrado += dados.valor;
+        } else {
+            card.style.display = "none";
+        }
+    });
+
+    // Atualiza os números na tela com os totais FILTRADOS
+    document.querySelector(".total-gasto").innerHTML = "R$" + totalFiltrado.toFixed(2);
+
+    for (let categoria in categoriasFiltradas) {
         let classe = categoria
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "")
@@ -843,11 +1304,17 @@ function carregarDados() {
         const elemento = document.querySelector("." + classe);
 
         if (elemento) {
-
-            elemento.innerHTML =
-                "R$ " + categorias[categoria].toFixed(2);
+            elemento.innerHTML = "R$ " + categoriasFiltradas[categoria].toFixed(2);
         }
     }
+
+    // Redesenha o gráfico só com os dados filtrados
+    desenharGraficoCategorias(categoriasFiltradas, totalFiltrado);
 }
 
-carregarDados();
+function removerBotaoLogout() {
+    const botao = document.getElementById("botao-logout-gasto");
+    if (botao) {
+        botao.remove();
+    }
+}
