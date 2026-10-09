@@ -53,6 +53,25 @@ function injetarEstilosLogin() {
         .btn-entrar-login { background: #2461d6; color: #fff; }
         .btn-criar-conta-login { background: #dad8d8b3; color: #333; margin-top: 8px; }
         .erro-login { color: #d6453d; font-size: 13px; margin-top: 10px; min-height: 16px; }
+
+        .campo-senha-login { position: relative; margin-top: 10px; }
+        .campo-senha-login input { margin-top: 0; padding-right: 44px; }
+        .caixa-login .btn-olho-senha {
+        position: absolute; right: 6px; top: 50%;
+        transform: translateY(-50%);
+        width: 34px; height: 34px; margin-top: 0; padding: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: transparent; color: #8a96a3;
+        border-radius: 8px;
+        transition: color 0.2s ease, background 0.2s ease;
+        }
+        .caixa-login .btn-olho-senha:hover {
+            opacity: 0.8;
+            color: #274845; background: #eef5f3;
+        }
+        .caixa-login .btn-olho-senha:active {
+            transform: translateY(-50%) scale(0.92);
+        }
     `;
     document.head.appendChild(style);
 }
@@ -69,7 +88,10 @@ function mostrarTelaLogin() {
         <div class="caixa-login">
             <h2>Gasto na Foto</h2>
             <input type="email" class="login-email" placeholder="Seu email">
+            <div class="campo-senha-login">
             <input type="password" class="login-senha" placeholder="Sua senha">
+            <button type="button" class="btn-olho-senha"  title="Mostrar senha">👁️</button>
+        </div>
             <button type="button" class="btn-entrar-login">Entrar</button>
             <button type="button" class="btn-criar-conta-login">Criar conta nova</button>
             <div class="erro-login"></div>
@@ -81,6 +103,19 @@ function mostrarTelaLogin() {
     const campoEmail = tela.querySelector(".login-email");
     const campoSenha = tela.querySelector(".login-senha");
     const divErro = tela.querySelector(".erro-login");
+    const botaoOlho = tela.querySelector(".btn-olho-senha");
+
+    botaoOlho.addEventListener("click", () => {
+    if (campoSenha.type === "password") {
+        campoSenha.type = "text";
+        botaoOlho.innerHTML = ICONE_OLHO_RISCADO;
+        botaoOlho.title = "Esconder senha";
+    } else {
+        campoSenha.type = "password";
+        botaoOlho.innerHTML = ICONE_OLHO;
+        botaoOlho.title = "Mostrar senha";
+    }
+});
 
     tela.querySelector(".btn-entrar-login").addEventListener("click", async () => {
         divErro.innerHTML = "";
