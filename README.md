@@ -1,4 +1,4 @@
-# 📸 Gasto na Foto
+#  Gasto na Foto
 
 Controle financeiro pessoal que usa Inteligência Artificial para registrar gastos de três formas diferentes: **por foto do comprovante**, **por comando de voz** ou **manualmente**.
 
