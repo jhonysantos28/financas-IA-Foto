@@ -72,6 +72,16 @@ function injetarEstilosLogin() {
         .caixa-login .btn-olho-senha:active {
             transform: translateY(-50%) scale(0.92);
         }
+        .caixa-login .btn-esqueci-senha {
+        display: block; width: auto;
+        margin: 8px 0 0 auto; padding: 2px 0;
+        background: transparent; color: #2461d6;
+        font-size: 13px; font-weight: 600;
+        }
+        .caixa-login .btn-esqueci-senha:hover {
+            text-decoration: underline;
+        }
+        .sucesso-login { color: #2e7d32; font-size: 13px; margin-top: 10px; }
     `;
     document.head.appendChild(style);
 }
@@ -92,11 +102,37 @@ function mostrarTelaLogin() {
             <input type="password" class="login-senha" placeholder="Sua senha">
             <button type="button" class="btn-olho-senha"  title="Mostrar senha">👁️</button>
         </div>
+
+            <button type="button" class="btn-esqueci-senha">Esqueci minha senha</button>
+        
             <button type="button" class="btn-entrar-login">Entrar</button>
             <button type="button" class="btn-criar-conta-login">Criar conta nova</button>
             <div class="erro-login"></div>
         </div>
     `;
+
+    tela.querySelector(".btn-esqueci-senha").addEventListener("click", async () => {
+
+    const email = campoEmail.value.trim();
+
+    divErro.className = "erro-login";
+    divErro.innerHTML = "";
+
+    if (!email) {
+        divErro.innerHTML = "Digite seu email acima para recuperar a senha.";
+        return;
+    }
+
+    try {
+        await auth.sendPasswordResetEmail(email);
+
+        divErro.className = "sucesso-login";
+        divErro.innerHTML = "Se esse email tiver uma conta, enviamos um link para criar uma nova senha. Confira também o spam.";
+
+    } catch (erro) {
+        divErro.innerHTML = traduzirErroLogin(erro);
+    }
+});
 
     document.body.appendChild(tela);
 
@@ -119,6 +155,7 @@ function mostrarTelaLogin() {
 
     tela.querySelector(".btn-entrar-login").addEventListener("click", async () => {
         divErro.innerHTML = "";
+        divErro.className = "erro-login";
         try {
             await auth.signInWithEmailAndPassword(campoEmail.value, campoSenha.value);
         } catch (erro) {
@@ -128,6 +165,7 @@ function mostrarTelaLogin() {
 
     tela.querySelector(".btn-criar-conta-login").addEventListener("click", async () => {
         divErro.innerHTML = "";
+        divErro.className = "erro-login";
         try {
             await auth.createUserWithEmailAndPassword(campoEmail.value, campoSenha.value);
         } catch (erro) {
