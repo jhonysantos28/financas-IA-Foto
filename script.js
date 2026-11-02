@@ -198,6 +198,143 @@ let categorias = {
     Outros: 0
 };
 
+let gastos = [];
+
+function gerarIdGasto() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function escaparHTML(texto) {
+    return String(texto)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function criarCardHTML(gasto) {
+    return `
+    <div class="comprovante" data-id="${gasto.id}">
+        <div class="cabecalho-comprovante">
+            <div class="etiqueta-categoria">${escaparHTML(gasto.categoria)}</div>
+            <div class="nome-estabelecimento">${escaparHTML(gasto.estabelecimento)}</div>
+        </div>
+        <div class="informacoes-comprovante">
+            <div class="itens">${escaparHTML(gasto.itens)}</div>
+            <div class="forma-pagamento">💳 Pagamento: <strong>${escaparHTML(gasto.pagamento)}</strong></div>
+            <div class="parcelas">📦 Parcelamento: <strong>${escaparHTML(gasto.parcelas)}</strong></div>
+            <div class="data-horario">📅 ${escaparHTML(gasto.dataHorario)}</div>
+        </div>
+        <div class="total-nota">Total da nota: <strong>R$ ${gasto.valor.toFixed(2)}</strong></div>
+        <button class="botao-editar" onclick="editarComprovante('${gasto.id}')">✏️ Editar</button>
+        <button class="botao-excluir" onclick="excluirComprovante('${gasto.id}')">🗑️ Excluir</button>
+    </div>`;
+}
+
+let mesFiltroAtual = "todos";
+
+const NOMES_DOS_MESES = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
+
+function chaveDoMes(timestamp) {
+    const data = new Date(timestamp);
+     if (!timestamp) {
+        return null;
+    }
+
+    if (isNaN(data.getTime())) {
+        return null; // gasto sem data válida
+    }
+
+    return data.getFullYear() + "-" + String(data.getMonth() + 1).padStart(2, "0");
+}
+
+function renderizarTudo() {
+
+    // 1. Descobre quais meses existem na lista
+    const mesesExistentes = new Set();
+
+    gastos.forEach(g => {
+        const chave = chaveDoMes(g.timestampRegistro);
+        if (chave) mesesExistentes.add(chave);
+    });
+
+    const mesesOrdenados = Array.from(mesesExistentes).sort().reverse();
+
+    // Se o mês filtrado não existe mais (ex: você excluiu o último gasto dele), volta pra "todos"
+    if (mesFiltroAtual !== "todos" && !mesesOrdenados.includes(mesFiltroAtual)) {
+        mesFiltroAtual = "todos";
+    }
+
+    // 2. Separa os gastos que passam pelo filtro
+    const visiveis = gastos.filter(g =>
+        mesFiltroAtual === "todos" || chaveDoMes(g.timestampRegistro) === mesFiltroAtual
+    );
+
+    // 3. Calcula os totais na hora
+    const categoriasCalculadas = {
+        Mercado: 0,
+        Transporte: 0,
+        Comida: 0,
+        Saúde: 0,
+        Lazer: 0,
+        Casa: 0,
+        Outros: 0
+    };
+
+    let dadosCarregados = false;
+
+    let totalCalculado = 0;
+
+    visiveis.forEach(g => {
+        if (categoriasCalculadas[g.categoria] !== undefined) {
+            categoriasCalculadas[g.categoria] += g.valor;
+        }
+        totalCalculado += g.valor;
+    });
+
+    // 4. Atualiza os números na tela
+    document.querySelector(".total-gasto").innerHTML = "R$" + totalCalculado.toFixed(2);
+    document.querySelector(".lidos").innerHTML = visiveis.length;
+
+    for (let categoria in categoriasCalculadas) {
+        let classe = categoria
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase();
+
+        const elemento = document.querySelector("." + classe);
+
+        if (elemento) {
+            elemento.innerHTML = "R$ " + categoriasCalculadas[categoria].toFixed(2);
+        }
+    }
+
+    // 5. Desenha os cards
+    document.querySelector(".lista-de-comprovantes").innerHTML =
+        visiveis.map(criarCardHTML).join("");
+
+    // 6. Atualiza o menu de meses
+    const select = document.getElementById("seletor-mes-gasto");
+
+    if (select) {
+        select.innerHTML = `<option value="todos">Todos os meses</option>`;
+
+        mesesOrdenados.forEach(chave => {
+            const [ano, mes] = chave.split("-");
+            select.innerHTML += `<option value="${chave}">${NOMES_DOS_MESES[Number(mes) - 1]} de ${ano}</option>`;
+        });
+
+        select.value = mesFiltroAtual;
+    }
+
+    // 7. Redesenha o gráfico
+    desenharGraficoCategorias(categoriasCalculadas, totalCalculado);
+}
+
 function normalizarCategoria(categoria) {
 
     categoria = categoria
@@ -408,41 +545,22 @@ function confirmarGasto(dados) {
 }
 
 function registrarGasto(dados) {
-      if (!dados.timestampRegistro) {
-        dados.timestampRegistro = Date.now();
-    }
-    
-    categorias[dados.categoria] += dados.valor;
 
-    document.querySelector(".lista-de-comprovantes").innerHTML += `
-    <div class="comprovante" data-categoria="${dados.categoria}" data-valor="${dados.valor}" data-dados="${btoa(unescape(encodeURIComponent(JSON.stringify(dados))))}">
-        <div class="cabecalho-comprovante">
-            <div class="etiqueta-categoria">${dados.categoria}</div>
-            <div class="nome-estabelecimento">${dados.estabelecimento}</div>
-        </div>
-        <div class="informacoes-comprovante">
-            <div class="itens">${dados.itens}</div>
-            <div class="forma-pagamento">💳 Pagamento: <strong>${dados.pagamento}</strong></div>
-            <div class="parcelas">📦 Parcelamento: <strong>${dados.parcelas}</strong></div>
-            <div class="data-horario">📅 ${dados.dataHorario}</div>
-        </div>
-        <div class="total-nota">Total da nota: <strong>R$ ${dados.valor.toFixed(2)}</strong></div>
-        <button class="botao-editar" onclick="editarComprovante(this)">✏️ Editar</button>
-        <button class="botao-excluir" onclick="excluirComprovante(this)">🗑️ Excluir</button>
-    </div>
-`;
+    gastos.push({
+        id: gerarIdGasto(),
+        categoria: dados.categoria,
+        estabelecimento: dados.estabelecimento,
+        itens: dados.itens,
+        valor: dados.valor,
+        pagamento: dados.pagamento,
+        parcelas: dados.parcelas,
+        dataHorario: dados.dataHorario,
+        timestampRegistro: dados.timestampRegistro || Date.now()
+    });
 
-    total += dados.valor;
-    document.querySelector(".total-gasto").innerHTML = "R$" + total.toFixed(2);
-
-    comprovantesLidos++;
-    document.querySelector(".lidos").innerHTML = comprovantesLidos;
-
-    atualizarCategorias();
-
+    renderizarTudo();
     salvarDados();
 }
-
 
 async function lerfoto() {
         try {
@@ -526,96 +644,36 @@ async function lerfoto() {
         document.querySelector(".carregando").style.display = "none";
     }
 }
-   
+   function excluirComprovante(id) {
+
+    gastos = gastos.filter(g => g.id !== id);
+
+    renderizarTudo();
+    salvarDados();
+}
 
 // Botão Excluir
-function excluirComprovante(botao) {
+async function editarComprovante(id) {
 
-    const comprovante = botao.parentElement;
+    const gasto = gastos.find(g => g.id === id);
 
-    // Pegar categoria e valor guardados na div
-    const categoria = comprovante.dataset.categoria;
-    const valor = Number(comprovante.dataset.valor);
-
-    // Diminuir da categoria
-    categorias[categoria] -= valor;
-
-    // Diminuir do total geral
-    total -= valor;
-
-    // Remover comprovante da tela
-    comprovante.remove();
-
-    // Atualizar total geral
-    document.querySelector(".total-gasto").innerHTML =
-        "R$ " + total.toFixed(2);
-
-    // Atualizar quantidade de comprovantes
-    comprovantesLidos =
-        document.querySelectorAll(".comprovante").length;
-
-    document.querySelector(".lidos").innerHTML = comprovantesLidos;
-
-    // Atualizar todas as categorias
-    for (let categoria in categorias) {
-
-        let classe = categoria
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toLowerCase();
-
-        document.querySelector("." + classe).innerHTML =
-            "R$ " + categorias[categoria].toFixed(2);
+    if (!gasto) {
+        return;
     }
-    salvarDados();
-}
 
-  async function editarComprovante(botao) {
-
-    const comprovante = botao.parentElement;
-
-    // Recupera os dados completos que guardamos escondidos no card
-    const dadosAtuais = JSON.parse(
-        decodeURIComponent(escape(atob(comprovante.dataset.dados)))
-    );
-
-    // Abre o mesmo modal de confirmação, já preenchido
-    const dadosEditados = await confirmarGasto(dadosAtuais);
+    // Abre o mesmo modal de confirmação, já preenchido com o gasto
+    const dadosEditados = await confirmarGasto(gasto);
 
     if (!dadosEditados) {
-        return; // usuário cancelou a edição
+        return; // usuário cancelou
     }
 
-    // Primeiro, desfaz o valor antigo dos totais e categorias
-    categorias[dadosAtuais.categoria] -= dadosAtuais.valor;
-    total -= dadosAtuais.valor;
+    // Atualiza só os campos editados (o id e a data de registro continuam os mesmos)
+    Object.assign(gasto, dadosEditados);
 
-    // Depois, aplica os novos valores
-    categorias[dadosEditados.categoria] += dadosEditados.valor;
-    total += dadosEditados.valor;
-
-    atualizarCategorias();
-    document.querySelector(".total-gasto").innerHTML = "R$" + total.toFixed(2);
-
-    // Atualiza o card na tela com os novos dados
-    comprovante.dataset.categoria = dadosEditados.categoria;
-    comprovante.dataset.valor = dadosEditados.valor;
-    comprovante.dataset.dados = btoa(unescape(encodeURIComponent(JSON.stringify(dadosEditados))));
-    
-    comprovante.querySelector(".etiqueta-categoria").innerHTML = dadosEditados.categoria;
-    comprovante.querySelector(".nome-estabelecimento").innerHTML = dadosEditados.estabelecimento;
-    comprovante.querySelector(".itens").innerHTML = dadosEditados.itens;
-    comprovante.querySelector(".forma-pagamento").innerHTML =
-        `💳 Pagamento: <strong>${dadosEditados.pagamento}</strong>`;
-    comprovante.querySelector(".parcelas").innerHTML =
-        `📦 Parcelamento: <strong>${dadosEditados.parcelas}</strong>`;
-    comprovante.querySelector(".data-horario").innerHTML = `📅 ${dadosEditados.dataHorario}`;
-    comprovante.querySelector(".total-nota").innerHTML =
-        `Total da nota: <strong>R$ ${dadosEditados.valor.toFixed(2)}</strong>`;
-
+    renderizarTudo();
     salvarDados();
 }
-
 const data = new Date();
 
 document.querySelector(".mes-atual").innerHTML =
@@ -858,57 +916,6 @@ function iniciarVoz() {
 
 }
 
-function atualizarCategorias() {
-
-    for (let c in categorias) {
-
-        let classe = c
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toLowerCase();
-
-        document.querySelector("." + classe).innerHTML =
-            "R$ " + categorias[c].toFixed(2);
-    }
-            atualizarOpcoesDeMes();
-         desenharGraficoCategorias();
-}
-
-function recalcularTotaisDosComprovantes() {
-
-    const categoriasRecalculadas = {
-        Mercado: 0,
-        Transporte: 0,
-        Comida: 0,
-        Saúde: 0,
-        Lazer: 0,
-        Casa: 0,
-        Outros: 0
-    };
-
-    let totalRecalculado = 0;
-
-    document.querySelectorAll(".comprovante").forEach(card => {
-        const categoria = card.dataset.categoria;
-        const valor = Number(card.dataset.valor);
-
-        if (categoriasRecalculadas[categoria] !== undefined && !isNaN(valor)) {
-            categoriasRecalculadas[categoria] += valor;
-            totalRecalculado += valor;
-        }
-    });
-
-    categorias = categoriasRecalculadas;
-    total = totalRecalculado;
-
-    atualizarCategorias();
-    document.querySelector(".total-gasto").innerHTML = "R$" + total.toFixed(2);
-
-    salvarDados();
-
-    console.log("Totais recalculados:", categorias, "Total:", total);
-}
-
 let graficoCategorias = null;
 let totalCentralGrafico = 0;
 
@@ -987,10 +994,9 @@ function desenharGraficoCategorias   (categoriasParaExibir, totalParaExibir) {
     });
 }
 
-
 function adicionarGastoManual() {
 
-    let estabelecimento = document.querySelector(".estabelecimento-manual").value;
+    let estabelecimento = document.querySelector(".estabelecimento-manual").value.trim();
     let valor = converterValorBR(document.querySelector(".valor-manual").value);
     let categoria = normalizarCategoria(document.querySelector(".categoria-manual").value);
     let pagamento = document.querySelector(".pagamento-manual").value;
@@ -1005,62 +1011,15 @@ function adicionarGastoManual() {
         parcelas = "Não informado";
     }
 
-    categorias[categoria] += valor;
-    total += valor;
-    comprovantesLidos++;
-
-    document.querySelector(".lista-de-comprovantes").innerHTML += `
-        <div class="comprovante" data-categoria="${categoria}" data-valor="${valor}">
-
-            <div class="cabecalho-comprovante">
-                <div class="nome-estabelecimento">
-                    ${estabelecimento || "Gasto manual"}
-                </div>
-            </div>
-
-            <div class="informacoes-comprovante">
-
-                <div class="itens">
-                    Gasto registrado manualmente
-                </div>
-
-                <div class="forma-pagamento">
-                    💳 Pagamento:
-                    <strong>${pagamento}</strong>
-                </div>
-
-                <div class="parcelas">
-                  📦 Parcelamento:
-                   <strong>${parcelas}</strong>
-                </div>
-
-                <div class="data-horario">
-                    📅 ${new Date().toLocaleDateString("pt-BR")}
-                </div>
-
-            </div>
-
-            <div class="total-nota">
-                Total da nota:
-                <strong>R$ ${valor.toFixed(2)}</strong>
-            </div>
-
-            <button class="botao-excluir" onclick="excluirComprovante(this)">
-                🗑️ Excluir
-            </button>
-
-        </div>
-    `;
-
-    document.querySelector(".total-gasto").innerHTML =
-        "R$ " + total.toFixed(2);
-
-    document.querySelector(".lidos").innerHTML =
-        comprovantesLidos;
-
-    atualizarCategorias();
-
-    salvarDados();
+    registrarGasto({
+        categoria: categoria,
+        estabelecimento: estabelecimento || "Gasto manual",
+        itens: "Gasto registrado manualmente",
+        valor: valor,
+        pagamento: pagamento,
+        parcelas: parcelas,
+        dataHorario: new Date().toLocaleDateString("pt-BR")
+    });
 
     document.querySelector(".estabelecimento-manual").value = "";
     document.querySelector(".valor-manual").value = "";
@@ -1088,21 +1047,73 @@ document.querySelector(".pagamento-manual").addEventListener("change", function 
 
 async function salvarDados() {
 
-    if (!usuarioAtual) {
-        return; // ninguém logado, não tem onde salvar
+    if (!usuarioAtual || !dadosCarregados) {
+        return;
     }
 
     try {
-        await db.collection("usuarios").doc(usuarioAtual.uid).set({
-            total: total,
-            comprovantesLidos: comprovantesLidos,
-            categorias: categorias,
-            comprovantesHTML: document.querySelector(".lista-de-comprovantes").innerHTML
-        });
-
+        await db.collection("usuarios").doc(usuarioAtual.uid).set(
+            { gastos: gastos, versao: 2 },
+            { merge: true }
+        );
     } catch (erro) {
         console.log("Erro ao salvar no Firestore:", erro);
     }
+}
+
+function migrarComprovantesAntigos(htmlAntigo) {
+
+    const container = document.createElement("div");
+    container.innerHTML = htmlAntigo;
+
+    const migrados = [];
+
+    container.querySelectorAll(".comprovante").forEach(card => {
+
+        let dados = null;
+
+        // Tenta ler os dados completos guardados no card
+        if (card.dataset.dados) {
+            try {
+                dados = JSON.parse(decodeURIComponent(escape(atob(card.dataset.dados))));
+            } catch (erro) {
+                dados = null;
+            }
+        }
+
+        // Cards muito antigos: lê o que dá direto do texto do card
+        if (!dados) {
+            dados = {
+                categoria: card.dataset.categoria,
+                estabelecimento: card.querySelector(".nome-estabelecimento")?.textContent.trim(),
+                itens: card.querySelector(".itens")?.textContent.trim(),
+                valor: Number(card.dataset.valor),
+                pagamento: card.querySelector(".forma-pagamento strong")?.textContent.trim(),
+                parcelas: card.querySelector(".parcelas strong")?.textContent.trim(),
+                dataHorario: card.querySelector(".data-horario")?.textContent.replace("📅", "").trim()
+            };
+        }
+
+        const valor = Number(dados.valor);
+
+        if (isNaN(valor)) {
+            return; // sem valor válido, não dá pra aproveitar
+        }
+
+        migrados.push({
+            id: gerarIdGasto(),
+            categoria: normalizarCategoria(String(dados.categoria || "")),
+            estabelecimento: dados.estabelecimento || "Não informado",
+            itens: dados.itens || "Não informado",
+            valor: valor,
+            pagamento: dados.pagamento || "Não informado",
+            parcelas: dados.parcelas || "Não informado",
+            dataHorario: dados.dataHorario || "Não informado",
+            timestampRegistro: dados.timestampRegistro || null
+        });
+    });
+
+    return migrados;
 }
 
 async function carregarDados() {
@@ -1114,64 +1125,42 @@ async function carregarDados() {
     try {
         const documento = await db.collection("usuarios").doc(usuarioAtual.uid).get();
 
+        let precisaSalvar = false;
+
         if (documento.exists) {
 
             const dadosSalvos = documento.data();
 
-            total = dadosSalvos.total || 0;
-            comprovantesLidos = dadosSalvos.comprovantesLidos || 0;
-            categorias = dadosSalvos.categorias || {
-                Mercado: 0,
-                Transporte: 0,
-                Comida: 0,
-                Saúde: 0,
-                Lazer: 0,
-                Casa: 0,
-                Outros: 0
-            };
+            if (Array.isArray(dadosSalvos.gastos)) {
+                // Formato novo
+                gastos = dadosSalvos.gastos;
 
-            document.querySelector(".lista-de-comprovantes").innerHTML =
-                dadosSalvos.comprovantesHTML || "";
+            } else if (dadosSalvos.comprovantesHTML) {
+                // Formato antigo: converte uma única vez
+                gastos = migrarComprovantesAntigos(dadosSalvos.comprovantesHTML);
+                precisaSalvar = true;
 
-               recalcularTotaisDosComprovantes();
+            } else {
+                gastos = [];
+            }
 
         } else {
-            // Usuário novo, sem dados salvos ainda — começa zerado
-            total = 0;
-            comprovantesLidos = 0;
-            categorias = {
-                Mercado: 0,
-                Transporte: 0,
-                Comida: 0,
-                Saúde: 0,
-                Lazer: 0,
-                Casa: 0,
-                Outros: 0
-            };
+            gastos = [];
         }
 
-        document.querySelector(".total-gasto").innerHTML = "R$" + total.toFixed(2);
-        document.querySelector(".lidos").innerHTML = comprovantesLidos;
+        dadosCarregados = true;
 
-        for (let categoria in categorias) {
-            let classe = categoria
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase();
+        renderizarTudo();
 
-            const elemento = document.querySelector("." + classe);
-
-            if (elemento) {
-                elemento.innerHTML = "R$ " + categorias[categoria].toFixed(2);
-            }
+        if (precisaSalvar) {
+            salvarDados();
         }
 
-     } catch (erro) {
-         console.log("Erro ao carregar do Firestore:", erro);
+    } catch (erro) {
+        console.log("Erro ao carregar do Firestore:", erro);
         alert("Não foi possível carregar seus dados. Verifique sua internet.");
     }
 }
-
 
 auth.onAuthStateChanged(function (usuario) {
 
@@ -1186,6 +1175,7 @@ auth.onAuthStateChanged(function (usuario) {
 
     } else {
         usuarioAtual = null;
+         gastos = [];
         removerBotaoLogout();
         mostrarTelaLogin();
     }
@@ -1259,130 +1249,6 @@ function criarSeletorDeMes() {
     select.addEventListener("change", function () {
         aplicarFiltroDeMes(this.value);
     });
-}
-
-function atualizarOpcoesDeMes() {
-
-    const select = document.getElementById("seletor-mes-gasto");
-    if (!select) return;
-
-    const valorSelecionadoAntes = select.value;
-
-    const mesesEncontrados = new Set();
-
-    document.querySelectorAll(".comprovante").forEach(card => {
-
-        if (!card.dataset.dados) {
-            return; // card antigo sem essa informação, ignora
-        }
-
-        let dados;
-        try {
-            dados = JSON.parse(
-                decodeURIComponent(escape(atob(card.dataset.dados)))
-            );
-        } catch (erro) {
-            return; // dado corrompido ou inválido, ignora
-        }
-
-        if (dados.timestampRegistro) {
-            const data = new Date(dados.timestampRegistro);
-            const chave = data.getFullYear() + "-" + String(data.getMonth() + 1).padStart(2, "0");
-            mesesEncontrados.add(chave);
-        }
-    });
-
-    // Ordena do mais recente para o mais antigo
-    const mesesOrdenados = Array.from(mesesEncontrados).sort().reverse();
-
-    const nomesDosMeses = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ];
-
-    select.innerHTML = `<option value="todos">Todos os meses</option>`;
-
-    mesesOrdenados.forEach(chave => {
-        const [ano, mes] = chave.split("-");
-        const nomeMes = nomesDosMeses[Number(mes) - 1];
-
-        select.innerHTML += `<option value="${chave}">${nomeMes} de ${ano}</option>`;
-    });
-
-    // Tenta manter a seleção que o usuário já tinha feito
-    if ([...select.options].some(o => o.value === valorSelecionadoAntes)) {
-        select.value = valorSelecionadoAntes;
-    }
-}
-
-function aplicarFiltroDeMes(mesEscolhido) {
-
-    const cards = document.querySelectorAll(".comprovante");
-
-    // Começamos os totais filtrados zerados
-    const categoriasFiltradas = {
-        Mercado: 0,
-        Transporte: 0,
-        Comida: 0,
-        Saúde: 0,
-        Lazer: 0,
-        Casa: 0,
-        Outros: 0
-    };
-    let totalFiltrado = 0;
-
-        cards.forEach(card => {
-
-        if (!card.dataset.dados) {
-            card.style.display = "block"; // sem info, mostra por segurança
-            return;
-        }
-
-        let dados;
-        try {
-            dados = JSON.parse(
-                decodeURIComponent(escape(atob(card.dataset.dados)))
-            );
-        } catch (erro) {
-            card.style.display = "block";
-            return;
-        }
-
-        let pertenceAoMes = true;
-
-        if (mesEscolhido !== "todos" && dados.timestampRegistro) {
-            const data = new Date(dados.timestampRegistro);
-            const chaveDoCard = data.getFullYear() + "-" + String(data.getMonth() + 1).padStart(2, "0");
-            pertenceAoMes = (chaveDoCard === mesEscolhido);
-        }
-
-        if (pertenceAoMes) {
-            card.style.display = "block";
-            categoriasFiltradas[dados.categoria] += dados.valor;
-            totalFiltrado += dados.valor;
-        } else {
-            card.style.display = "none";
-        }
-    });
-
-    // Atualiza os números na tela com os totais FILTRADOS
-    document.querySelector(".total-gasto").innerHTML = "R$" + totalFiltrado.toFixed(2);
-
-    for (let categoria in categoriasFiltradas) {
-        let classe = categoria
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .toLowerCase();
-
-        const elemento = document.querySelector("." + classe);
-
-        if (elemento) {
-            elemento.innerHTML = "R$ " + categoriasFiltradas[categoria].toFixed(2);
-        }
-    }
-
-    // Redesenha o gráfico só com os dados filtrados
-    desenharGraficoCategorias(categoriasFiltradas, totalFiltrado);
 }
 
 function removerBotaoLogout() {
