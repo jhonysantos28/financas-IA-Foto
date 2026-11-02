@@ -562,6 +562,42 @@ function registrarGasto(dados) {
     salvarDados();
 }
 
+function comprimirImagem(arquivo, ladoMaximo = 1600, qualidade = 0.85) {
+    return new Promise((resolve, reject) => {
+
+        const url = URL.createObjectURL(arquivo);
+        const img = new Image();
+
+        img.onload = () => {
+            const escala = Math.min(1, ladoMaximo / Math.max(img.width, img.height));
+            const largura = Math.round(img.width * escala);
+            const altura = Math.round(img.height * escala);
+
+            const canvas = document.createElement("canvas");
+            canvas.width = largura;
+            canvas.height = altura;
+            canvas.getContext("2d").drawImage(img, 0, 0, largura, altura);
+
+            URL.revokeObjectURL(url);
+
+            canvas.toBlob(blob => {
+                if (!blob) {
+                    reject(new Error("Falha ao reduzir a imagem"));
+                    return;
+                }
+                resolve(new File([blob], "comprovante.jpg", { type: "image/jpeg" }));
+            }, "image/jpeg", qualidade);
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Imagem inválida"));
+        };
+
+        img.src = url;
+    });
+}
+
 async function lerfoto() {
         try {
          
@@ -574,10 +610,11 @@ async function lerfoto() {
     document.querySelector(".carregando").style.display = "block";
 
     let pedido = montarPedidoFoto();
+    const fotoLeve = await comprimirImagem(foto);
 
     // chamada Assincrona
     // Estou pegando a Informação e estou enviando a IA para me devolver a resposta
-    let resposta = await puter.ai.chat(pedido, foto);
+        let resposta = await puter.ai.chat(pedido, fotoLeve);
 
     // Pegar a resposta da IA e filtrar para mostrar na tela ok
     let texto = resposta.message.content;
