@@ -107,13 +107,15 @@
 
    
     <!--INPUT PARA SELECIONAR IMAGENS-->
-    <label class="botao-foto"> 
-             📷 Tirar foto do comprovante
-        <input class="foto" onchange="lerfoto(this.files[0])" type="file" accept="image/*">
-
+    <label class="botao-foto" onclick="abrirCamera()">
+    📸 Tirar foto do comprovante
     </label>
-     
-        <button class="botao-voz" onclick="iniciarVoz()">
+
+    <label class="botao-foto">
+        🖼️ Escolher da galeria
+        <input class="foto" onchange="lerfoto(this.files[0])" type="file" accept="image/*">
+    </label>
+            <button class="botao-voz" onclick="iniciarVoz()">
         🎙️ Falar gasto
         </button>
 
