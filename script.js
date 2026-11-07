@@ -598,10 +598,13 @@ function comprimirImagem(arquivo, ladoMaximo = 1600, qualidade = 0.85) {
     });
 }
 
-async function lerfoto() {
+async function lerfoto(arquivoRecebido) {
         try {
-         
-    let foto = document.querySelector(".foto").files[0];
+            
+             let foto = (arquivoRecebido instanceof File)
+        ? arquivoRecebido
+        : document.querySelector(".foto").files[0];
+    
 
     if (!foto) {
         return;
