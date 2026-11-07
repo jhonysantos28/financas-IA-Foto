@@ -598,6 +598,102 @@ function comprimirImagem(arquivo, ladoMaximo = 1600, qualidade = 0.85) {
     });
 }
 
+function injetarEstilosCamera() {
+
+    if (document.getElementById("estilos-camera-gasto")) return;
+
+    const style = document.createElement("style");
+    style.id = "estilos-camera-gasto";
+    style.textContent = `
+        .camera-overlay {
+            position: fixed; inset: 0; background: #000;
+            display: flex; flex-direction: column;
+            z-index: 10001;
+        }
+        .camera-video {
+            flex: 1; width: 100%; min-height: 0;
+            object-fit: contain; background: #000;
+        }
+        .camera-barra {
+            display: flex; gap: 12px; padding: 16px; background: #000;
+        }
+        .camera-barra button {
+            flex: 1; padding: 14px; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+        }
+        .btn-camera-cancelar { background: #333; color: #fff; }
+        .btn-camera-capturar { background: #2e7d32; color: #fff; }
+    `;
+    document.head.appendChild(style);
+}
+
+async function abrirCamera() {
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Seu navegador não permite usar a câmera aqui. Use a opção de galeria.");
+        return;
+    }
+
+    injetarEstilosCamera();
+
+    let stream;
+
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } },
+            audio: false
+        });
+    } catch (erro) {
+        console.log("Erro ao abrir a câmera:", erro);
+        alert("Não foi possível abrir a câmera. Verifique se você permitiu o acesso, ou use a galeria.");
+        return;
+    }
+
+    const overlay = document.createElement("div");
+    overlay.className = "camera-overlay";
+    overlay.innerHTML = `
+        <video class="camera-video" autoplay playsinline muted></video>
+        <div class="camera-barra">
+            <button type="button" class="btn-camera-cancelar">Cancelar</button>
+            <button type="button" class="btn-camera-capturar">📸 Capturar</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const video = overlay.querySelector(".camera-video");
+    video.srcObject = stream;
+
+    function fecharCamera() {
+        stream.getTracks().forEach(t => t.stop());
+        overlay.remove();
+    }
+
+    overlay.querySelector(".btn-camera-cancelar").addEventListener("click", fecharCamera);
+
+    overlay.querySelector(".btn-camera-capturar").addEventListener("click", () => {
+
+        if (!video.videoWidth) {
+            return; // a câmera ainda não terminou de carregar
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+
+        canvas.toBlob(blob => {
+            fecharCamera();
+
+            if (!blob) {
+                alert("Não foi possível capturar a foto. Tente de novo.");
+                return;
+            }
+
+            lerfoto(new File([blob], "comprovante.jpg", { type: "image/jpeg" }));
+        }, "image/jpeg", 0.85);
+    });
+}
+
 async function lerfoto(arquivoRecebido) {
         try {
             
